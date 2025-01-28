@@ -30,6 +30,7 @@ import { StorageCard, StorageDescription, new_card, new_page } from "../pages.js
 import { block_name, drive_name, format_temperature, fmt_size_long, should_ignore } from "../utils.js";
 import { make_block_page } from "../block/create-pages.jsx";
 import { partitionable_block_actions } from "../partitions/actions.jsx";
+import { SmartCard } from "../smart-details";
 
 const _ = cockpit.gettext;
 
@@ -71,7 +72,7 @@ export function make_drive_page(parent, drive) {
         hdd: HDDIcon,
     };
 
-    const drive_card = new_card({
+    let card = new_card({
         title: drive_title[cls] || _("Drive"),
         next: null,
         page_block: block,
@@ -84,10 +85,21 @@ export function make_drive_page(parent, drive) {
         actions: block.Size > 0 ? partitionable_block_actions(block) : [],
     });
 
+    // TODO this works but probably should be somewhere else :)
+    const drive_ata = client.drives_ata[drive.path];
+    if (drive_ata !== undefined) {
+        card = new_card({
+            title: _("S.M.A.R.T."),
+            next: card,
+            component: SmartCard,
+            props: { drive_ata },
+        });
+    }
+
     if (block.Size > 0) {
-        make_block_page(parent, block, drive_card);
+        make_block_page(parent, block, card);
     } else {
-        new_page(parent, drive_card);
+        new_page(parent, card);
     }
 }
 

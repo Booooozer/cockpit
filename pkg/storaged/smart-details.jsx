@@ -21,8 +21,9 @@ import cockpit from "cockpit";
 import React, { useState } from "react";
 import * as timeformat from "timeformat.js";
 
-import { Card, CardBody, CardHeader, CardTitle, DescriptionList, DescriptionListDescription, DescriptionListGroup, DescriptionListTerm } from "@patternfly/react-core";
+import { CardBody, DescriptionList, DescriptionListDescription, DescriptionListGroup, DescriptionListTerm } from "@patternfly/react-core";
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/dist/esm/deprecated/components/Dropdown/index.js';
+import { StorageCard } from "./pages.jsx";
 
 const _ = cockpit.gettext;
 
@@ -39,40 +40,40 @@ const selftestStatusDescription = {
     inprogress: _("In progress"),
 };
 
-const SmartActions = ({ smartInfo }) => {
+const SmartActions = ({ drive_ata }) => {
     const [isKebabOpen, setKebabOpen] = useState(false);
-    const smartSelftestStatus = smartInfo.SmartSelftestStatus;
+    const smartSelftestStatus = drive_ata.SmartSelftestStatus;
 
     const runSmartTest = async (type) => {
-        await smartInfo.SmartSelftestStart(type, {});
+        await drive_ata.SmartSelftestStart(type, {});
     };
 
     const abortSmartTest = async () => {
-        await smartInfo.SmartSelftestAbort({});
+        await drive_ata.SmartSelftestAbort({});
     };
 
     const actions = [
-        <DropdownItem key="run-short-test"
+        <DropdownItem key="smart-short-test"
                       isDisabled={smartSelftestStatus === "inprogress"}
                       onClick={() => { setKebabOpen(false); runSmartTest('short') }}>
             {_("Run short test")}
         </DropdownItem>,
-        <DropdownItem key="run-extended-test"
+        <DropdownItem key="smart-extended-test"
                       isDisabled={smartSelftestStatus === "inprogress"}
                       onClick={() => { setKebabOpen(false); runSmartTest('extended') }}>
             {_("Run extended test")}
         </DropdownItem>,
-        <DropdownItem key="run-conveyance-test"
+        <DropdownItem key="smart-conveyance-test"
                       isDisabled={smartSelftestStatus === "inprogress"}
                       onClick={() => { setKebabOpen(false); runSmartTest('conveyance') }}>
             {_("Run conveyance test")}
         </DropdownItem>,
     ];
 
-    if (smartInfo.SmartSelftestStatus === "inprogress") {
+    if (drive_ata.SmartSelftestStatus === "inprogress") {
         actions.push(
             <DropdownItem key="abort-smart-test"
-                          onClick={() => { setKebabOpen(false); abortSmartTest('conveyance') }}>
+                          onClick={() => { setKebabOpen(false); abortSmartTest() }}>
                 {_("Abort test")}
             </DropdownItem>,
         );
@@ -84,11 +85,12 @@ const SmartActions = ({ smartInfo }) => {
                 isOpen={isKebabOpen}
                 position="right"
                 id="smart-actions"
-                dropdownItems={actions} />
+                dropdownItems={actions}
+        />
     );
 };
 
-export const SmartDetails = ({ smartInfo }) => {
+export const SmartCard = ({ card, drive_ata }) => {
     const SmartDetailRow = ({ title, value }) => {
         if (value === undefined)
             return null;
@@ -102,19 +104,26 @@ export const SmartDetails = ({ smartInfo }) => {
     };
 
     return (
-        <Card>
-            <CardHeader actions={{ actions: <SmartActions smartInfo={smartInfo} /> }}>
-                <CardTitle component="h2">{_("S.M.A.R.T")}</CardTitle>
-            </CardHeader>
+        <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} />}>
             <CardBody>
                 <DescriptionList isHorizontal horizontalTermWidthModifier={{ default: '20ch' }}>
-                    <SmartDetailRow title={_("Power on hours")} value={cockpit.format(_("$0 hours"), Math.round(smartInfo.SmartPowerOnSeconds / 3600))} />
-                    <SmartDetailRow title={_("Last updated")} value={timeformat.dateTime(new Date(smartInfo.SmartUpdated * 1000))} />
-                    <SmartDetailRow title={_("Smart selftest status")} value={selftestStatusDescription[smartInfo.SmartSelftestStatus]} />
-                    <SmartDetailRow title={_("Number of bad sectors")} value={smartInfo.SmartNumBadSectors} />
-                    <SmartDetailRow title={_("Atributes failing")} value={smartInfo.SmartNumAttributesFailing} />
+                    <SmartDetailRow title={_("Power on hours")}
+                        value={cockpit.format(_("$0 hours"), Math.round(drive_ata.SmartPowerOnSeconds / 3600))}
+                    />
+                    <SmartDetailRow title={_("Last updated")}
+                        value={timeformat.dateTime(new Date(drive_ata.SmartUpdated * 1000))}
+                    />
+                    <SmartDetailRow title={_("Smart selftest status")}
+                        value={selftestStatusDescription[drive_ata.SmartSelftestStatus]}
+                    />
+                    <SmartDetailRow title={_("Number of bad sectors")}
+                        value={drive_ata.SmartNumBadSectors}
+                    />
+                    <SmartDetailRow title={_("Atributes failing")}
+                        value={drive_ata.SmartNumAttributesFailing}
+                    />
                 </DescriptionList>
             </CardBody>
-        </Card>
+        </StorageCard>
     );
 };
