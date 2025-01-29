@@ -21,9 +21,9 @@ import cockpit from "cockpit";
 import React, { useState } from "react";
 import * as timeformat from "timeformat.js";
 
-import { CardBody, DescriptionList, DescriptionListDescription, DescriptionListGroup, DescriptionListTerm } from "@patternfly/react-core";
+import { CardBody, DescriptionList, } from "@patternfly/react-core";
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/dist/esm/deprecated/components/Dropdown/index.js';
-import { StorageCard } from "./pages.jsx";
+import { StorageCard, StorageDescription } from "./pages.jsx";
 
 const _ = cockpit.gettext;
 
@@ -91,36 +91,24 @@ const SmartActions = ({ drive_ata }) => {
 };
 
 export const SmartCard = ({ card, drive_ata }) => {
-    const SmartDetailRow = ({ title, value }) => {
-        if (value === undefined)
-            return null;
-
-        return (
-            <DescriptionListGroup>
-                <DescriptionListTerm>{title}</DescriptionListTerm>
-                <DescriptionListDescription>{value}</DescriptionListDescription>
-            </DescriptionListGroup>
-        );
-    };
-
     return (
         <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} />}>
             <CardBody>
                 <DescriptionList isHorizontal horizontalTermWidthModifier={{ default: '20ch' }}>
-                    <SmartDetailRow title={_("Power on hours")}
+                    <StorageDescription title={_("Power on hours")}
                         value={cockpit.format(_("$0 hours"), Math.round(drive_ata.SmartPowerOnSeconds / 3600))}
                     />
-                    <SmartDetailRow title={_("Last updated")}
+                    <StorageDescription title={_("Last updated")}
                         value={timeformat.dateTime(new Date(drive_ata.SmartUpdated * 1000))}
                     />
-                    <SmartDetailRow title={_("Smart selftest status")}
+                    <StorageDescription title={_("Smart selftest status")}
                         value={selftestStatusDescription[drive_ata.SmartSelftestStatus]}
                     />
-                    <SmartDetailRow title={_("Number of bad sectors")}
-                        value={drive_ata.SmartNumBadSectors}
+                    <StorageDescription title={_("Number of bad sectors")}
+                        value={drive_ata.SmartNumBadSectors + " " + _("sectors")}
                     />
-                    <SmartDetailRow title={_("Atributes failing")}
-                        value={drive_ata.SmartNumAttributesFailing}
+                    <StorageDescription title={_("Atributes failing")}
+                        value={drive_ata.SmartNumAttributesFailing + " " + _("attributes")}
                     />
                 </DescriptionList>
             </CardBody>
