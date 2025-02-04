@@ -164,7 +164,7 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
                         />
                     }
                     {drive_type === "hdd" &&
-                        <StorageDescription title={_("Atributes failing")}
+                        <StorageDescription title={_("Attributes failing")}
                             value={drive_ata.SmartNumAttributesFailing}
                         />
                     }
