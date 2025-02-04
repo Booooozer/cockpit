@@ -58,6 +58,8 @@ const selftestStatusDescription = {
 };
 
 // TODO: UX to show what is wrong with the nvme
+// .SmartCriticalWarning contains an array of values which say what is wrong with the disk
+// empty if disk OK
 // https://storaged.org/doc/udisks2-api/latest/gdbus-org.freedesktop.UDisks2.NVMe.Controller.html#gdbus-property-org-freedesktop-UDisks2-NVMe-Controller.SmartCriticalWarning
 const nvmeCriticalWarning = {
     spare: _("Spare capacity is bellow the treshold"),
@@ -68,7 +70,7 @@ const nvmeCriticalWarning = {
     pmr_readonly: _("Persistent memory has become read-only")
 };
 
-const SmartActions = ({ drive_ata, drive_type }) => {
+const SmartActions = ({ drive_ata }) => {
     const [isKebabOpen, setKebabOpen] = useState(false);
     const smartSelftestStatus = drive_ata.SmartSelftestStatus;
 
@@ -80,10 +82,6 @@ const SmartActions = ({ drive_ata, drive_type }) => {
         drive_ata.SmartSelftestAbort({});
     };
 
-    // TODO:
-    // hdd also has offline test type
-    // ssd has vendor-specific test type
-    // - investigate what these are
     const actions = [
         <DropdownItem key="smart-short-test"
                       isDisabled={smartSelftestStatus === "inprogress"}
@@ -114,18 +112,6 @@ const SmartActions = ({ drive_ata, drive_type }) => {
 };
 
 export const SmartCard = ({ card, drive_ata, drive_type }) => {
-    // diffs:
-    // ssd
-    // smartInfo.powerOnHours = drive_ata.SmartPowerOnHours;
-    // hdd
-    // smartInfo.powerOnHours = Math.round(drive_ata.SmartPowerOnSeconds / 3600);
-    //
-    // hdd only params
-    // smartInfo.numBadSectors = drive_ata.SmartNumBadSectors;
-    // smartInfo.numAttrFailing = drive_ata.SmartNumAttributesFailing;
-
-    console.log(drive_ata);
-
     const powerOnHours = (drive_type === "hdd")
         ? Math.round(drive_ata.SmartPowerOnSeconds / 3600)
         : drive_ata.SmartPowerOnHours;
@@ -154,7 +140,7 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
     );
 
     return (
-        <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} drive_type={drive_type} />}>
+        <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} />}>
             <CardBody>
                 <DescriptionList isHorizontal horizontalTermWidthModifier={{ default: '20ch' }}>
                     { assesment }
@@ -174,12 +160,12 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
                     />
                     {drive_type === "hdd" &&
                         <StorageDescription title={_("Number of bad sectors")}
-                            value={drive_ata.SmartNumBadSectors + " " + (drive_ata.SmartNumBadSectors === 1 ? _("sector") : _("sectors"))}
+                            value={drive_ata.SmartNumBadSectors}
                         />
                     }
                     {drive_type === "hdd" &&
                         <StorageDescription title={_("Atributes failing")}
-                            value={drive_ata.SmartNumAttributesFailing + " " + (drive_ata.SmartNumAttributesFailing === 1 ? _("attribute") : _("attributes"))}
+                            value={drive_ata.SmartNumAttributesFailing}
                         />
                     }
                 </DescriptionList>
