@@ -86,13 +86,13 @@ export function make_drive_page(parent, drive) {
     });
 
     // TODO this works but probably should be somewhere else :)
-    const drive_ata = client.drives_ata[drive.path];
+    const drive_ata = client.drives_ata[drive.path] || client.nvme_controller[drive.path];
     if (drive_ata !== undefined) {
         card = new_card({
             title: _("S.M.A.R.T."),
             next: card,
             component: SmartCard,
-            props: { drive_ata },
+            props: { drive_ata, drive_type: cls },
         });
     }
 
