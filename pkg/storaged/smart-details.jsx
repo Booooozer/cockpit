@@ -21,8 +21,12 @@ import cockpit from "cockpit";
 import React, { useState } from "react";
 import * as timeformat from "timeformat.js";
 
-import { CardBody, DescriptionList, } from "@patternfly/react-core";
+import { CardBody } from "@patternfly/react-core/dist/esm/components/Card/index.js";
+import { DescriptionList } from "@patternfly/react-core/dist/esm/components/DescriptionList/index.js";
+import { Flex } from "@patternfly/react-core/dist/esm/layouts/Flex/index.js";
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/dist/esm/deprecated/components/Dropdown/index.js';
+
+import { format_temperature } from "./utils.js";
 import { StorageCard, StorageDescription } from "./pages.jsx";
 
 const _ = cockpit.gettext;
@@ -53,6 +57,17 @@ const selftestStatusDescription = {
     aborted_sanitize: _("Aborted due to a sanitize operation"),
 };
 
+// TODO: UX to show what wrong with the nvme
+// https://storaged.org/doc/udisks2-api/latest/gdbus-org.freedesktop.UDisks2.NVMe.Controller.html#gdbus-property-org-freedesktop-UDisks2-NVMe-Controller.SmartCriticalWarning
+const nvmeCriticalWarning = {
+    spare: _("Spare capacity is bellow the treshold"),
+    temperature: _("Temperature outside of recommended thresholds"),
+    degraded: _("Degraded"),
+    readonly: _("All media is in read-only mode"),
+    volatile_mem: _("Volatile memory backup failed"),
+    pmr_readonly: _("Persistent memory has become read-only")
+};
+
 const SmartActions = ({ drive_ata, disk_type }) => {
     const [isKebabOpen, setKebabOpen] = useState(false);
     const smartSelftestStatus = drive_ata.SmartSelftestStatus;
@@ -81,7 +96,7 @@ const SmartActions = ({ drive_ata, disk_type }) => {
             {_("Run extended test")}
         </DropdownItem>,
     ];
-    if (disk_type === "hdd"){
+    if (disk_type === "hdd") {
         actions.push(
             <DropdownItem key="smart-conveyance-test"
                           isDisabled={smartSelftestStatus === "inprogress"}
@@ -122,28 +137,54 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
     // smartInfo.numBadSectors = drive_ata.SmartNumBadSectors;
     // smartInfo.numAttrFailing = drive_ata.SmartNumAttributesFailing;
 
+    console.log(drive_ata);
+
     const powerOnHours = (drive_type === "hdd")
         ? Math.round(drive_ata.SmartPowerOnSeconds / 3600)
         : drive_ata.SmartPowerOnHours;
+
+    const smartOK = (drive_type === "hdd" && !drive_ata.SmartFailing) || (drive_type === "ssd" && drive_ata.SmartCriticalWarning.length === 0);
+    const assesment = (
+        <StorageDescription title={_("Assessment")}>
+            <Flex spaceItems={{ default: 'spaceItemsXs' }}>
+                { drive_type === "hdd" && !smartOK &&
+                    <span className="cockpit-disk-failing">{_("Disk is failing")}</span>
+                }
+                { drive_type === "ssd" && !smartOK &&
+                    (<span className="cockpit-disk-failing">
+                        {_("Disk is failing") + ": " + drive_ata.SmartCriticalWarning.map(reason => nvmeCriticalWarning[reason]).join(", ")}
+                    </span>)
+                }
+                { smartOK &&
+                    <span>{_("Disk is OK")}</span>
+                }
+                { drive_ata.SmartTemperature > 0
+                    ? <span>({format_temperature(drive_ata.SmartTemperature)})</span>
+                    : null
+                }
+            </Flex>
+        </StorageDescription>
+    );
 
     return (
         <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} />}>
             <CardBody>
                 <DescriptionList isHorizontal horizontalTermWidthModifier={{ default: '20ch' }}>
+                    { assesment }
                     <StorageDescription title={_("Power on hours")}
                         value={cockpit.format(_("$0 hours"), powerOnHours)}
-                    />
-                    <StorageDescription title={_("Last update")}
-                        value={timeformat.dateTime(new Date(drive_ata.SmartUpdated * 1000))}
                     />
                     <StorageDescription title={_("Selftest status")}
                         value={selftestStatusDescription[drive_ata.SmartSelftestStatus]}
                     />
-                    {drive_ata.SmartSelftestPercentRemaining !== -1 && 
+                    {drive_ata.SmartSelftestPercentRemaining !== -1 &&
                         <StorageDescription title={_("Progress")}
                             value={(100 - drive_ata.SmartSelftestPercentRemaining) + "%"}
                         />
                     }
+                    <StorageDescription title={_("Last update")}
+                        value={timeformat.dateTime(new Date(drive_ata.SmartUpdated * 1000))}
+                    />
                     {drive_type === "hdd" &&
                         <StorageDescription title={_("Number of bad sectors")}
                             value={drive_ata.SmartNumBadSectors + " " + (drive_ata.SmartNumBadSectors > 1 ? _("sectors") : _("sector"))}

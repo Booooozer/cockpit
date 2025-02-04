@@ -23,11 +23,10 @@ import client from "../client";
 
 import { CardBody } from "@patternfly/react-core/dist/esm/components/Card/index.js";
 import { DescriptionList } from "@patternfly/react-core/dist/esm/components/DescriptionList/index.js";
-import { Flex } from "@patternfly/react-core/dist/esm/layouts/Flex/index.js";
 
 import { HDDIcon, SSDIcon, MediaDriveIcon } from "../icons/gnome-icons.jsx";
 import { StorageCard, StorageDescription, new_card, new_page } from "../pages.jsx";
-import { block_name, drive_name, format_temperature, fmt_size_long, should_ignore } from "../utils.js";
+import { block_name, drive_name, fmt_size_long, should_ignore } from "../utils.js";
 import { make_block_page } from "../block/create-pages.jsx";
 import { partitionable_block_actions } from "../partitions/actions.jsx";
 import { SmartCard } from "../smart-details";
@@ -105,25 +104,7 @@ export function make_drive_page(parent, drive) {
 
 const DriveCard = ({ card, page, drive }) => {
     const block = client.drives_block[drive.path];
-    const drive_ata = client.drives_ata[drive.path];
     const multipath_blocks = client.drives_multipath_blocks[drive.path];
-
-    let assessment = null;
-    if (drive_ata) {
-        assessment = (
-            <StorageDescription title={_("Assessment")}>
-                <Flex spaceItems={{ default: 'spaceItemsXs' }}>
-                    { drive_ata.SmartFailing
-                        ? <span className="cockpit-disk-failing">{_("Disk is failing")}</span>
-                        : <span>{_("Disk is OK")}</span>
-                    }
-                    { drive_ata.SmartTemperature > 0
-                        ? <span>({format_temperature(drive_ata.SmartTemperature)})</span>
-                        : null
-                    }
-                </Flex>
-            </StorageDescription>);
-    }
 
     return (
         <StorageCard card={card}>
@@ -140,7 +121,6 @@ const DriveCard = ({ card, page, drive }) => {
                             : _("No media inserted")
                         }
                     </StorageDescription>
-                    { assessment }
                     <StorageDescription title={_("Device file")}
                            value={block ? block_name(block) : "-"} />
                     { multipath_blocks.length > 0 &&
