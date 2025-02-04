@@ -57,7 +57,7 @@ const selftestStatusDescription = {
     aborted_sanitize: _("Aborted due to a sanitize operation"),
 };
 
-// TODO: UX to show what wrong with the nvme
+// TODO: UX to show what is wrong with the nvme
 // https://storaged.org/doc/udisks2-api/latest/gdbus-org.freedesktop.UDisks2.NVMe.Controller.html#gdbus-property-org-freedesktop-UDisks2-NVMe-Controller.SmartCriticalWarning
 const nvmeCriticalWarning = {
     spare: _("Spare capacity is bellow the treshold"),
@@ -68,7 +68,7 @@ const nvmeCriticalWarning = {
     pmr_readonly: _("Persistent memory has become read-only")
 };
 
-const SmartActions = ({ drive_ata, disk_type }) => {
+const SmartActions = ({ drive_ata, drive_type }) => {
     const [isKebabOpen, setKebabOpen] = useState(false);
     const smartSelftestStatus = drive_ata.SmartSelftestStatus;
 
@@ -95,25 +95,12 @@ const SmartActions = ({ drive_ata, disk_type }) => {
                       onClick={() => { setKebabOpen(false); runSelfTest('extended') }}>
             {_("Run extended test")}
         </DropdownItem>,
+        <DropdownItem key="abort-smart-test"
+                      isDisabled={smartSelftestStatus !== "inprogress"}
+                      onClick={() => { setKebabOpen(false); abortSelfTest() }}>
+            {_("Abort test")}
+        </DropdownItem>,
     ];
-    if (disk_type === "hdd") {
-        actions.push(
-            <DropdownItem key="smart-conveyance-test"
-                          isDisabled={smartSelftestStatus === "inprogress"}
-                          onClick={() => { setKebabOpen(false); runSelfTest('conveyance') }}>
-                {_("Run conveyance test")}
-            </DropdownItem>,
-        );
-    }
-
-    if (drive_ata.SmartSelftestStatus === "inprogress") {
-        actions.push(
-            <DropdownItem key="abort-smart-test"
-                          onClick={() => { setKebabOpen(false); abortSelfTest() }}>
-                {_("Abort test")}
-            </DropdownItem>,
-        );
-    }
 
     return (
         <Dropdown toggle={<KebabToggle onToggle={(_, isOpen) => setKebabOpen(isOpen)} />}
@@ -167,7 +154,7 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
     );
 
     return (
-        <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} />}>
+        <StorageCard card={card} actions={<SmartActions drive_ata={drive_ata} drive_type={drive_type} />}>
             <CardBody>
                 <DescriptionList isHorizontal horizontalTermWidthModifier={{ default: '20ch' }}>
                     { assesment }
@@ -177,7 +164,7 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
                     <StorageDescription title={_("Selftest status")}
                         value={selftestStatusDescription[drive_ata.SmartSelftestStatus]}
                     />
-                    {drive_ata.SmartSelftestPercentRemaining !== -1 &&
+                    {drive_ata.SmartSelftestStatus === "inprogress" && drive_ata.SmartSelftestPercentRemaining !== -1 &&
                         <StorageDescription title={_("Progress")}
                             value={(100 - drive_ata.SmartSelftestPercentRemaining) + "%"}
                         />
@@ -187,12 +174,12 @@ export const SmartCard = ({ card, drive_ata, drive_type }) => {
                     />
                     {drive_type === "hdd" &&
                         <StorageDescription title={_("Number of bad sectors")}
-                            value={drive_ata.SmartNumBadSectors + " " + (drive_ata.SmartNumBadSectors > 1 ? _("sectors") : _("sector"))}
+                            value={drive_ata.SmartNumBadSectors + " " + (drive_ata.SmartNumBadSectors === 1 ? _("sector") : _("sectors"))}
                         />
                     }
                     {drive_type === "hdd" &&
                         <StorageDescription title={_("Atributes failing")}
-                            value={drive_ata.SmartNumAttributesFailing + " " + (drive_ata.SmartNumAttributesFailing > 1 ? _("attributes") : _("attribute"))}
+                            value={drive_ata.SmartNumAttributesFailing + " " + (drive_ata.SmartNumAttributesFailing === 1 ? _("attribute") : _("attributes"))}
                         />
                     }
                 </DescriptionList>
