@@ -84,7 +84,6 @@ export function make_drive_page(parent, drive) {
         actions: block.Size > 0 ? partitionable_block_actions(block) : [],
     });
 
-    // TODO this works but probably should be somewhere else :)
     let smart_info, drive_type;
     if (client.drives_ata[drive.path]) {
         smart_info = client.drives_ata[drive.path];
@@ -93,6 +92,7 @@ export function make_drive_page(parent, drive) {
         smart_info = client.nvme_controller[drive.path];
         drive_type = "nvme";
     }
+
     if (smart_info !== undefined && (cls === "hdd" || cls === "ssd")) {
         card = new_card({
             title: _("S.M.A.R.T."),

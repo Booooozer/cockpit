@@ -72,5 +72,11 @@ class TestStorageSmart(storagelib.StorageCase):
         set_smart_dump("Maxtor_96147H8--BAC51KJ0--2", "/dev/sda")
         check_smart_info("Disk is failing", "2263 hours", "Successful", bad_sectors="71", failing_attrs="1")
 
+        # Check that SMART card is not visible on DVD drive
+        b.go("/storage")
+        self.click_card_row("Storage", name="sr0")
+        b.wait_visible(self.card("Media drive"))
+        b.wait_not_present(self.card("S.M.A.R.T."))
+
 if __name__ == '__main__':
     testlib.test_main()
