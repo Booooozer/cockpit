@@ -27,7 +27,9 @@ import { Flex } from "@patternfly/react-core/dist/esm/layouts/Flex/index.js";
 import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/dist/esm/deprecated/components/Dropdown/index.js';
 
 import { format_temperature } from "./utils.js";
+import { superuser } from "superuser.js";
 import { StorageCard, StorageDescription } from "./pages.jsx";
+import { useEvent } from "hooks.js";
 
 const _ = cockpit.gettext;
 
@@ -84,17 +86,17 @@ const SmartActions = ({ smart_info }) => {
 
     const actions = [
         <DropdownItem key="smart-short-test"
-                      isDisabled={smartSelftestStatus === "inprogress"}
+                      isDisabled={!superuser.allowed || smartSelftestStatus === "inprogress"}
                       onClick={() => { setKebabOpen(false); runSelfTest('short') }}>
             {_("Run short test")}
         </DropdownItem>,
         <DropdownItem key="smart-extended-test"
-                      isDisabled={smartSelftestStatus === "inprogress"}
+                      isDisabled={!superuser.allowed || smartSelftestStatus === "inprogress"}
                       onClick={() => { setKebabOpen(false); runSelfTest('extended') }}>
             {_("Run extended test")}
         </DropdownItem>,
         <DropdownItem key="abort-smart-test"
-                      isDisabled={smartSelftestStatus !== "inprogress"}
+                      isDisabled={!superuser.allowed || smartSelftestStatus !== "inprogress"}
                       onClick={() => { setKebabOpen(false); abortSelfTest() }}>
             {_("Abort test")}
         </DropdownItem>,
@@ -112,6 +114,7 @@ const SmartActions = ({ smart_info }) => {
 };
 
 export const SmartCard = ({ card, smart_info, drive_type }) => {
+    useEvent(superuser, "changed");
     const powerOnHours = (drive_type === "ata")
         ? Math.round(smart_info.SmartPowerOnSeconds / 3600)
         : smart_info.SmartPowerOnHours;
